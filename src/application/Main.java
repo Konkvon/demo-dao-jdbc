@@ -1,6 +1,7 @@
 package application;
 
 import models.dao.DaoFactory;
+import models.dao.SellerDao;
 import models.entities.Department;
 import models.entities.Seller;
 
