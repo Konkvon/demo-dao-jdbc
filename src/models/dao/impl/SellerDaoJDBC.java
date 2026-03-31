@@ -2,6 +2,8 @@ package models.dao.impl;
 
 import db.DB;
 import db.DbException;
+import mapper.DepartmentMapper;
+import mapper.SellerMapper;
 import models.dao.SellerDao;
 import models.entities.Department;
 import models.entities.Seller;
@@ -20,37 +22,21 @@ public class SellerDaoJDBC implements SellerDao {
         this.conn = conn;
     }
 
-
-    private Seller instatiateSeller(ResultSet rs, Department dep) throws SQLException {
-        Seller obj = new Seller();
-        obj.setId(rs.getInt("Id"));
-        obj.setName(rs.getString("Name"));
-        obj.setEmail(rs.getString("Email"));
-        obj.setBaseSalary(rs.getDouble("BaseSalary"));
-        obj.setBirthDate(rs.getDate("BirthDate"));
-        obj.setDepartment(dep);
-        return obj;
-    }
-
-    private Department instatiateDepartment(ResultSet rs) throws SQLException {
-        Department dep = new Department();
-        dep.setId(rs.getInt("DepartmentId"));
-        dep.setName(rs.getString("DepName"));
-        return dep;
-    }
-
-    private List<Seller> departmentCheck(ResultSet rs) throws SQLException {
+    private List<Seller> instantiateSellerList(ResultSet rs) throws SQLException {
         List<Seller> list = new ArrayList<>();
         Map<Integer, Department> map = new HashMap<>();
 
         while (rs.next()) {
-            Department dep = map.get(rs.getInt("DepartmentId"));
+            Integer depId = rs.getInt("DepartmentId");
+
+            Department dep = map.get(depId);
+
             if (dep == null) {
-                dep = instatiateDepartment(rs);
-                map.put(rs.getInt("DepartmentId"), dep);
+                dep = DepartmentMapper.fromResultSet(rs);
+                map.put(depId, dep);
             }
 
-            Seller obj = instatiateSeller(rs, dep);
+            Seller obj = SellerMapper.fromResultSet(rs, dep);
             list.add(obj);
         }
         return list;
@@ -154,8 +140,8 @@ public Seller findById(Integer id){
         rs = st.executeQuery();
 
         if (rs.next()){
-            Department dep = instatiateDepartment(rs);
-            Seller obj = instatiateSeller(rs, dep);
+            Department dep = DepartmentMapper.fromResultSet(rs);
+            Seller obj = SellerMapper.fromResultSet(rs, dep);
             return obj;
         }
         return null;
@@ -182,7 +168,7 @@ public List<Seller> findAll() {
 
         rs = st.executeQuery();
 
-        return departmentCheck(rs);
+        return instantiateSellerList(rs);
 
     } catch (SQLException e) {
         throw new DbException(e.getMessage());
@@ -208,7 +194,7 @@ public List<Seller> findByDepartment(Department department) {
         st.setInt(1, department.getId());
         rs = st.executeQuery();
 
-        return departmentCheck(rs);
+        return instantiateSellerList(rs);
 
     } catch (SQLException e) {
         throw new DbException(e.getMessage());
